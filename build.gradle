@@ -1,0 +1,26 @@
+plugins {
+    id 'java-library'
+}
+
+group 'pl.memexurer'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.zaxxer:HikariCP:4.0.3'
+
+    compileOnly 'org.projectlombok:lombok:1.18.20'
+    annotationProcessor 'org.projectlombok:lombok:1.18.20'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+
+    testImplementation 'org.mariadb.jdbc:mariadb-java-client:2.1.2'
+}
+
+test {
+    useJUnitPlatform()
+}
