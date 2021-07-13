@@ -32,4 +32,12 @@ public class DatabaseQueryTransaction<T> extends DatabaseUpdateTransaction<State
             throw new DatabaseTransactionError(throwable);
         }
     }
+
+    public boolean isEmpty() throws DatabaseTransactionError{
+        try {
+            return !getResultSet().isBeforeFirst();
+        } catch (SQLException throwable) {
+            throw new DatabaseTransactionError(throwable);
+        }
+    }
 }
