@@ -1,25 +1,24 @@
 plugins {
-    id 'java-library'
     id 'maven-publish'
 }
 
 group 'pl.memexurer'
-version '1.0.1-SNAPSHOT'
+version '1.0.2-SNAPSHOT'
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation 'com.zaxxer:HikariCP:4.0.3'
+    implementation 'com.zaxxer:HikariCP:5.0.0'
 
     compileOnly 'org.projectlombok:lombok:1.18.20'
     annotationProcessor 'org.projectlombok:lombok:1.18.20'
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.0'
 
-    testImplementation 'org.mariadb.jdbc:mariadb-java-client:2.1.2'
+    testImplementation 'org.mariadb.jdbc:mariadb-java-client:2.7.3'
 }
 
 test {
