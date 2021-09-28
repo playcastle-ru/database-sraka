@@ -6,9 +6,9 @@ import java.sql.Statement;
 import lombok.SneakyThrows;
 
 public class DatabaseQueryTransaction<T> extends DatabaseUpdateTransaction<Statement> {
-    private final ResultSetDeserializer<T> deserializer;
+    private final TableInformationProvider<T> deserializer;
 
-    public DatabaseQueryTransaction(Statement statement, ResultSetDeserializer<T> deserializer) {
+    public DatabaseQueryTransaction(Statement statement, TableInformationProvider<T> deserializer) {
         super(statement);
         this.deserializer = deserializer;
     }
