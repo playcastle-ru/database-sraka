@@ -3,17 +3,17 @@ package pl.memexurer.srakadb.sql.mapper.serializer;
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import pl.memexurer.srakadb.sql.mapper.TableRowInfo;
-import pl.memexurer.srakadb.sql.mapper.TypedTableRow;
+import pl.memexurer.srakadb.sql.mapper.TableColumnInfo;
+import pl.memexurer.srakadb.sql.mapper.TypedTableColumn;
 
-public interface TableRowValueDeserializer<T> {
+public interface TableColumnValueDeserializer<T> {
 
   @SuppressWarnings("unchecked")
-  static TableRowValueDeserializer<?> getDeserializer(Field field) {
-    TableRowInfo rowInfo = field.getAnnotation(TableRowInfo.class);
+  static TableColumnValueDeserializer<?> getDeserializer(Field field) {
+    TableColumnInfo rowInfo = field.getAnnotation(TableColumnInfo.class);
 
-    if (rowInfo.serialized().value() != PlaceholderRowValueDeserializer.class) {
-      if (rowInfo.serialized().value() == BasicRowValueDeserializer.class) {
+    if (rowInfo.serialized().value() != PlaceholderColumnValueDeserializer.class) {
+      if (rowInfo.serialized().value() == BasicColumnValueDeserializer.class) {
         if (field.getType().isEnum()) {
           return new DefaultEnumValueDeserializer<>((Class<? extends Enum<?>>) field.getType());
         } else if(field.getType().isArray()) {
@@ -29,16 +29,16 @@ public interface TableRowValueDeserializer<T> {
         }
       }
     } else if (rowInfo.typed().value().length() != 0) {
-      TypedTableRow typedTableRow = field.getAnnotation(TypedTableRow.class);
-      return new BasicRowValueDeserializer(
-          typedTableRow.value()
+      TypedTableColumn typedTableColumn = field.getAnnotation(TypedTableColumn.class);
+      return new BasicColumnValueDeserializer(
+          typedTableColumn.value()
       );
     } else {
       throw new IllegalArgumentException("Sus!");
     }
   }
 
-  T deserialize(ResultSet set, String row) throws SQLException;
+  T deserialize(ResultSet set, String column) throws SQLException;
 
   Object serialize(T fieldValue);
 

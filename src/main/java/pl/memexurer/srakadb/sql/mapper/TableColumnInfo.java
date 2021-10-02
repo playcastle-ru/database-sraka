@@ -4,14 +4,14 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import pl.memexurer.srakadb.sql.mapper.serializer.PlaceholderRowValueDeserializer;
+import pl.memexurer.srakadb.sql.mapper.serializer.PlaceholderColumnValueDeserializer;
 
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface TableRowInfo {
-  TypedTableRow typed() default @TypedTableRow(value = "");
+public @interface TableColumnInfo {
+  TypedTableColumn typed() default @TypedTableColumn(value = "");
 
-  SerializableTableRow serialized() default @SerializableTableRow(value = PlaceholderRowValueDeserializer.class);
+  SerializableTableColumn serialized() default @SerializableTableColumn(value = PlaceholderColumnValueDeserializer.class);
 
   String name() default "";
 

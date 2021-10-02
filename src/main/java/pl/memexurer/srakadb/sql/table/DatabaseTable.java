@@ -10,7 +10,7 @@ import java.util.Map;
 public class DatabaseTable<T> {
 
   private final String tableName;
-  private final Map<String, DatabaseTableRow> datatypeTableMap;
+  private final Map<String, DatabaseTableColumn> datatypeTableMap;
   private final TableInformationProvider<T> tableInformationProvider;
 
   private Connection connection;
@@ -35,8 +35,8 @@ public class DatabaseTable<T> {
     stringBuilder.append("(");
 
     int counter = 0;
-    for (DatabaseTableRow tableRow : datatypeTableMap.values()) {
-      stringBuilder.append(tableRow.rowName());
+    for (DatabaseTableColumn tableRow : datatypeTableMap.values()) {
+      stringBuilder.append(tableRow.columnName());
       stringBuilder.append(' ');
       stringBuilder.append(tableRow.datatype().sqlString());
       if (tableRow.isPrimary()) {
@@ -118,15 +118,15 @@ public class DatabaseTable<T> {
 
   public static class TableBuilder {
 
-    private final Map<String, DatabaseTableRow> tableRowMap;
+    private final Map<String, DatabaseTableColumn> tableRowMap;
 
     public TableBuilder(
-        Map<String, DatabaseTableRow> tableRowMap) {
+        Map<String, DatabaseTableColumn> tableRowMap) {
       this.tableRowMap = tableRowMap;
     }
 
     public void addColumn(String name, String datatype, boolean primary, boolean nullable) {
-      this.tableRowMap.put(name, new DatabaseTableRow(name, () -> datatype, primary, nullable));
+      this.tableRowMap.put(name, new DatabaseTableColumn(name, () -> datatype, primary, nullable));
     }
   }
 }

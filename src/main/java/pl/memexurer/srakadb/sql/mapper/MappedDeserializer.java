@@ -10,17 +10,17 @@ import lombok.SneakyThrows;
 import pl.memexurer.srakadb.sql.table.DatabasePreparedTransaction;
 import pl.memexurer.srakadb.sql.table.DatabaseTable.TableBuilder;
 import pl.memexurer.srakadb.sql.table.TableInformationProvider;
-import pl.memexurer.srakadb.sql.mapper.serializer.TableRowValueDeserializer;
+import pl.memexurer.srakadb.sql.mapper.serializer.TableColumnValueDeserializer;
 
 public class MappedDeserializer<T> implements TableInformationProvider<T> {
 
-  private final Map<Field, RowFieldPair> valueDeserializerMap = new HashMap<>();
+  private final Map<Field, ColumnFieldPair> valueDeserializerMap = new HashMap<>();
   private final Class<T> tClass;
 
   public MappedDeserializer(Class<T> tClass) {
     this.tClass = tClass;
     for (Field field : tClass.getDeclaredFields()) {
-      RowFieldPair fieldPair = RowFieldPair.get(field);
+      ColumnFieldPair fieldPair = ColumnFieldPair.get(field);
       if (fieldPair == null) {
         continue;
       }
@@ -45,7 +45,7 @@ public class MappedDeserializer<T> implements TableInformationProvider<T> {
   public T deserialize(ResultSet set) throws SQLException {
     T instance = createInstance(tClass);
 
-    for (Map.Entry<Field, RowFieldPair> rows : valueDeserializerMap.entrySet()) {
+    for (Map.Entry<Field, ColumnFieldPair> rows : valueDeserializerMap.entrySet()) {
       Object deserialized = rows.getValue().deserializer().deserialize(set, rows.getValue().name());
       try {
         rows.getKey().set(instance, deserialized);
@@ -59,7 +59,7 @@ public class MappedDeserializer<T> implements TableInformationProvider<T> {
 
   @Override
   public void generateTable(TableBuilder builder) {
-    for (RowFieldPair rows : valueDeserializerMap.values()) {
+    for (ColumnFieldPair rows : valueDeserializerMap.values()) {
       builder.addColumn(rows.name(), rows.deserializer().getDataType(), rows.primary(),
           rows.nullable());
     }
@@ -69,7 +69,7 @@ public class MappedDeserializer<T> implements TableInformationProvider<T> {
   @SneakyThrows
   @SuppressWarnings("unchecked")
   public void fillAllRows(T tValue, DatabasePreparedTransaction transaction) {
-    for (Map.Entry<Field, RowFieldPair> rows : valueDeserializerMap.entrySet()) {
+    for (Map.Entry<Field, ColumnFieldPair> rows : valueDeserializerMap.entrySet()) {
       Object value;
       try {
         value = rows.getKey().get(tValue);
@@ -79,23 +79,23 @@ public class MappedDeserializer<T> implements TableInformationProvider<T> {
       }
 
       transaction.set(rows.getValue().name(),
-          ((TableRowValueDeserializer<Object>) rows.getValue().deserializer()).serialize(
+          ((TableColumnValueDeserializer<Object>) rows.getValue().deserializer()).serialize(
               value));
     }
   }
 
-  private record RowFieldPair(TableRowValueDeserializer<?> deserializer, String name,
-                              boolean primary, boolean nullable) {
+  private record ColumnFieldPair(TableColumnValueDeserializer<?> deserializer, String name,
+                                 boolean primary, boolean nullable) {
 
-    static RowFieldPair get(Field field) {
-      TableRowInfo rowInfo = field.getAnnotation(TableRowInfo.class);
+    static ColumnFieldPair get(Field field) {
+      TableColumnInfo rowInfo = field.getAnnotation(TableColumnInfo.class);
       if (rowInfo == null) {
         return null;
       }
 
-      TableRowValueDeserializer<?> deserializer = TableRowValueDeserializer.getDeserializer(field);
+      TableColumnValueDeserializer<?> deserializer = TableColumnValueDeserializer.getDeserializer(field);
 
-      return new RowFieldPair(deserializer,
+      return new ColumnFieldPair(deserializer,
           rowInfo.name().length() == 0 ? field.getName() : rowInfo.name(),
           rowInfo.primary(), rowInfo.nullable());
     }

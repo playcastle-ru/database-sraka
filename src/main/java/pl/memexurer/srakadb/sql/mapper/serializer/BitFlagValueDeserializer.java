@@ -7,7 +7,7 @@ import java.sql.SQLException;
 import lombok.SneakyThrows;
 import pl.memexurer.srakadb.sql.type.BitFlag;
 
-public class BitFlagValueDeserializer implements TableRowValueDeserializer<BitFlag> {
+public class BitFlagValueDeserializer implements TableColumnValueDeserializer<BitFlag> {
 
   private final Class<? extends BitFlag> bitFlagClass;
 
@@ -51,10 +51,10 @@ public class BitFlagValueDeserializer implements TableRowValueDeserializer<BitFl
 
   @Override
   @SneakyThrows
-  public BitFlag deserialize(ResultSet set, String row) throws SQLException {
+  public BitFlag deserialize(ResultSet set, String column) throws SQLException {
     BitFlag bitFlagObject = createBitFlagObject(bitFlagClass);
 
-    int value = set.getInt(row);
+    int value = set.getInt(column);
     for (int index = 0; index < value; index++) {
       Field currentField = bitFlagClass.getFields()[index];
 

@@ -3,13 +3,13 @@ package pl.memexurer.srakadb.sql.mapper.serializer;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class PlaceholderRowValueDeserializer implements TableRowValueDeserializer<Object> {
+public class PlaceholderColumnValueDeserializer implements TableColumnValueDeserializer<Object> {
 
-  private PlaceholderRowValueDeserializer() {
+  private PlaceholderColumnValueDeserializer() {
   }
 
   @Override
-  public Object deserialize(ResultSet set, String row) throws SQLException {
+  public Object deserialize(ResultSet set, String column) throws SQLException {
     return null;
   }
 

@@ -4,11 +4,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
 
-public class UuidValueDeserializer implements TableRowValueDeserializer<UUID> {
+public class UuidValueDeserializer implements TableColumnValueDeserializer<UUID> {
 
   @Override
-  public UUID deserialize(ResultSet set, String row) throws SQLException {
-    return UUID.fromString(set.getString(row));
+  public UUID deserialize(ResultSet set, String column) throws SQLException {
+    return UUID.fromString(set.getString(column));
   }
 
   @Override
