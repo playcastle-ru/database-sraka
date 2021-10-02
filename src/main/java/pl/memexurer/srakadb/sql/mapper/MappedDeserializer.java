@@ -1,7 +1,6 @@
 package pl.memexurer.srakadb.sql.mapper;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -11,16 +10,18 @@ import pl.memexurer.srakadb.sql.table.DatabasePreparedTransaction;
 import pl.memexurer.srakadb.sql.table.DatabaseTable.TableBuilder;
 import pl.memexurer.srakadb.sql.table.TableInformationProvider;
 import pl.memexurer.srakadb.sql.mapper.serializer.TableColumnValueDeserializer;
+import pl.memexurer.srakadb.sql.util.ObjectProperty;
+import pl.memexurer.srakadb.sql.util.ObjectProperty.FieldObjectProperty;
 
 public class MappedDeserializer<T> implements TableInformationProvider<T> {
 
-  private final Map<Field, ColumnFieldPair> valueDeserializerMap = new HashMap<>();
+  private final Map<FieldObjectProperty, ColumnFieldPair> valueDeserializerMap = new HashMap<>();
   private final Class<T> tClass;
 
   public MappedDeserializer(Class<T> tClass) {
     this.tClass = tClass;
-    for (Field field : tClass.getDeclaredFields()) {
-      ColumnFieldPair fieldPair = ColumnFieldPair.get(field);
+    for (FieldObjectProperty field : ObjectProperty.properties(tClass)) {
+      ColumnFieldPair fieldPair = ColumnFieldPair.get(field.field());
       if (fieldPair == null) {
         continue;
       }
@@ -45,14 +46,9 @@ public class MappedDeserializer<T> implements TableInformationProvider<T> {
   public T deserialize(ResultSet set) throws SQLException {
     T instance = createInstance(tClass);
 
-    for (Map.Entry<Field, ColumnFieldPair> rows : valueDeserializerMap.entrySet()) {
+    for (Map.Entry<FieldObjectProperty, ColumnFieldPair> rows : valueDeserializerMap.entrySet()) {
       Object deserialized = rows.getValue().deserializer().deserialize(set, rows.getValue().name());
-      try {
-        rows.getKey().set(instance, deserialized);
-      } catch (IllegalAccessException e) {
-        rows.getKey().setAccessible(true);
-        rows.getKey().set(instance, deserialized);
-      }
+      rows.getKey().setValue(instance, deserialized);
     }
     return null;
   }
@@ -69,35 +65,12 @@ public class MappedDeserializer<T> implements TableInformationProvider<T> {
   @SneakyThrows
   @SuppressWarnings("unchecked")
   public void fillAllRows(T tValue, DatabasePreparedTransaction transaction) {
-    for (Map.Entry<Field, ColumnFieldPair> rows : valueDeserializerMap.entrySet()) {
-      Object value;
-      try {
-        value = rows.getKey().get(tValue);
-      } catch (IllegalAccessException e) {
-        rows.getKey().setAccessible(true);
-        value = rows.getKey().get(tValue);
-      }
+    for (Map.Entry<FieldObjectProperty, ColumnFieldPair> rows : valueDeserializerMap.entrySet()) {
+      Object value = rows.getKey().getValue(tValue);
 
       transaction.set(rows.getValue().name(),
           ((TableColumnValueDeserializer<Object>) rows.getValue().deserializer()).serialize(
               value));
-    }
-  }
-
-  private record ColumnFieldPair(TableColumnValueDeserializer<?> deserializer, String name,
-                                 boolean primary, boolean nullable) {
-
-    static ColumnFieldPair get(Field field) {
-      TableColumnInfo rowInfo = field.getAnnotation(TableColumnInfo.class);
-      if (rowInfo == null) {
-        return null;
-      }
-
-      TableColumnValueDeserializer<?> deserializer = TableColumnValueDeserializer.getDeserializer(field);
-
-      return new ColumnFieldPair(deserializer,
-          rowInfo.name().length() == 0 ? field.getName() : rowInfo.name(),
-          rowInfo.primary(), rowInfo.nullable());
     }
   }
 }
