@@ -1,4 +1,4 @@
-package pl.memexurer.srakadb.sql;
+package pl.memexurer.srakadb.sql.table;
 
 public interface DatabaseTransaction extends AutoCloseable {
     @Override

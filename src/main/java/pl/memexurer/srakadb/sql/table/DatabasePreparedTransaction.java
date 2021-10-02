@@ -1,4 +1,4 @@
-package pl.memexurer.srakadb.sql;
+package pl.memexurer.srakadb.sql.table;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;

@@ -7,9 +7,9 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.SneakyThrows;
-import pl.memexurer.srakadb.sql.DatabasePreparedTransaction;
-import pl.memexurer.srakadb.sql.DatabaseTable.TableBuilder;
-import pl.memexurer.srakadb.sql.TableInformationProvider;
+import pl.memexurer.srakadb.sql.table.DatabasePreparedTransaction;
+import pl.memexurer.srakadb.sql.table.DatabaseTable.TableBuilder;
+import pl.memexurer.srakadb.sql.table.TableInformationProvider;
 import pl.memexurer.srakadb.sql.mapper.serializer.TableRowValueDeserializer;
 
 public class MappedDeserializer<T> implements TableInformationProvider<T> {
