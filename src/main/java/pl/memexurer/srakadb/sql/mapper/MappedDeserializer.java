@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.SneakyThrows;
 import pl.memexurer.srakadb.sql.table.DatabasePreparedTransaction;
-import pl.memexurer.srakadb.sql.table.DatabaseTable.TableBuilder;
+import pl.memexurer.srakadb.sql.table.DatabaseTableColumn;
 import pl.memexurer.srakadb.sql.table.TableInformationProvider;
 import pl.memexurer.srakadb.sql.mapper.serializer.TableColumnValueDeserializer;
 import pl.memexurer.srakadb.sql.util.ObjectProperty;
@@ -54,10 +54,9 @@ public class MappedDeserializer<T> implements TableInformationProvider<T> {
   }
 
   @Override
-  public void generateTable(TableBuilder builder) {
+  public void generateTable(Map<String, DatabaseTableColumn> builder) {
     for (ColumnFieldPair rows : valueDeserializerMap.values()) {
-      builder.addColumn(rows.name(), rows.deserializer().getDataType(), rows.primary(),
-          rows.nullable());
+      builder.put(rows.name(), rows);
     }
   }
 
