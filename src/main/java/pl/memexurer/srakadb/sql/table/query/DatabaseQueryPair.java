@@ -1,9 +1,9 @@
 package pl.memexurer.srakadb.sql.table.query;
 
-import pl.memexurer.srakadb.sql.table.query.DatabaseFetchQuery.QueryPrecondition;
+import pl.memexurer.srakadb.sql.table.DatabaseTableColumn;
 
-public record DatabaseQueryPair(DatabaseQueryColumn column, Object value) {
-  public static DatabaseQueryPair of(DatabaseQueryColumn column, Object value) {
+public record DatabaseQueryPair(DatabaseTableColumn column, Object value) {
+  public static DatabaseQueryPair of(DatabaseTableColumn column, Object value) {
     return new DatabaseQueryPair(column, value);
   }
 }

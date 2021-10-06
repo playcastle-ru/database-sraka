@@ -4,29 +4,24 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
+import pl.memexurer.srakadb.sql.mapper.DataModelMapper;
 import pl.memexurer.srakadb.sql.table.query.DatabaseFetchQuery;
-import pl.memexurer.srakadb.sql.table.query.DatabaseQueryColumn;
-import pl.memexurer.srakadb.sql.table.query.DatabaseQueryPair;
 import pl.memexurer.srakadb.sql.table.query.DatabaseInsertQuery;
+import pl.memexurer.srakadb.sql.table.transaction.DatabasePreparedTransaction;
+import pl.memexurer.srakadb.sql.table.transaction.DatabaseQueryTransaction;
+import pl.memexurer.srakadb.sql.table.transaction.DatabaseTransactionError;
+import pl.memexurer.srakadb.sql.table.transaction.DatabaseUpdateTransaction;
 
 public class DatabaseTable<T> {
 
   private final String tableName;
-  private final Map<String, DatabaseTableColumn> datatypeTableMap;
-  private final TableInformationProvider<T> tableInformationProvider;
+  private final DataModelMapper<T> modelMapper;
 
   private Connection connection;
 
-  public DatabaseTable(String tableName, TableInformationProvider<T> tableInformationProvider) {
+  public DatabaseTable(String tableName, Class<T> modelClass) {
     this.tableName = tableName;
-    this.datatypeTableMap = new LinkedHashMap<>();
-
-    this.tableInformationProvider = tableInformationProvider;
-    this.tableInformationProvider.generateTable(datatypeTableMap);
+    this.modelMapper = new DataModelMapper<>(modelClass);
   }
 
   public void initializeTable(Connection connection) throws DatabaseTransactionError {
@@ -40,8 +35,7 @@ public class DatabaseTable<T> {
     stringBuilder.append(tableName);
     stringBuilder.append("(");
 
-    int counter = 0;
-    for (DatabaseTableColumn tableRow : datatypeTableMap.values()) {
+    for (DatabaseTableColumn tableRow : modelMapper.getColumns()) {
       stringBuilder.append(tableRow.getColumnName());
       stringBuilder.append(' ');
       stringBuilder.append(tableRow.getDatatype().sqlString());
@@ -53,14 +47,22 @@ public class DatabaseTable<T> {
         stringBuilder.append(' ');
         stringBuilder.append("NOT NULL");
       }
-      if (++counter != datatypeTableMap.size()) {
-        stringBuilder.append(',');
-      } else {
-        stringBuilder.append(')');
-      }
+
+      stringBuilder.append(',');
     }
 
+    stringBuilder.deleteCharAt(stringBuilder.length());
+    stringBuilder.append(')');
+
     executeUpdate(stringBuilder.toString());
+  }
+
+  public DatabaseUpdateTransaction<?> executeInsertQuery(DatabaseInsertQuery insertQuery) {
+    return insertQuery.execute(this);
+  }
+
+  public DatabaseQueryTransaction<T> executeFetchQuery(DatabaseFetchQuery fetchQuery) {
+    return fetchQuery.executeFetchQuery(this);
   }
 
   private void executeUpdate(String query) throws DatabaseTransactionError {
@@ -71,115 +73,27 @@ public class DatabaseTable<T> {
     }
   }
 
-  private void validateQueryPairs(DatabaseQueryPair[] queryPairs) {
-    for (DatabaseQueryPair queryPair : queryPairs) {
-      if (!datatypeTableMap.containsKey(queryPair.column().getName())) {
-        throw new IllegalArgumentException(
-            "Table doesn't contain " + queryPair.column().getName());
-      }
-    }
-  }
-
-  private void validateQueryColumns(DatabaseQueryColumn[] queryPairs) {
-    for (DatabaseQueryColumn queryPair : queryPairs) {
-      if (!datatypeTableMap.containsKey(queryPair.getName())) {
-        throw new IllegalArgumentException(
-            "Table doesn't contain " + queryPair.getName());
-      }
-    }
-  }
-
-  public DatabaseQueryTransaction<?> executeFetchQuery(DatabaseFetchQuery fetchQuery) {
-    if(fetchQuery.getColumns() == null)
-      throw new IllegalArgumentException("DatabaseFetchQuery columns should not be null!");
-
-    validateQueryColumns(fetchQuery.getColumns());
-    if(fetchQuery.getPreconditions() != null)
-      validateQueryPairs(fetchQuery.getPreconditions());
-
-    StringBuilder builder = new StringBuilder("SELECT ");
-    if (fetchQuery.getColumns() == null) {
-      builder.append("* ");
-    } else {
-      builder.append('(').append(
-              Arrays.stream(fetchQuery.getColumns())
-                  .map(DatabaseQueryColumn::getName)
-                  .collect(Collectors.joining(",")))
-          .append(")");
-    }
-
-    builder.append(" FROM ").append(tableName).append(' ');
-
-    if (fetchQuery.getPreconditions() != null) {
-      builder.append("WHERE ").append(
-          Arrays.stream(fetchQuery.getPreconditions())
-              .map(pair -> pair.column().getName() + "=?")
-              .collect(Collectors.joining(" AND "))
-      );
-    }
-
-    PreparedStatement statement;
+  public PreparedStatement prepareStatement(String query) {
     try {
-      statement = connection.prepareStatement(builder.toString());
-      for (int i = 1; i < fetchQuery.getPreconditions().length; i++) {
-        statement.setObject(i, fetchQuery.getPreconditions()[i - 1]);
-      }
-
-      statement.executeQuery();
+      return connection.prepareStatement(query);
     } catch (SQLException throwable) {
       throw new DatabaseTransactionError(throwable);
     }
-    return new DatabaseQueryTransaction<>(statement, tableInformationProvider);
   }
 
-  public DatabasePreparedTransaction executeInsertQuery(DatabaseInsertQuery updateQuery) {
-    if (updateQuery.getValues() == null) {
-      throw new IllegalArgumentException("DatabaseInsertQuery values should not be null!");
-    }
-
-    validateQueryPairs(updateQuery.getValues());
-    if(updateQuery.getPreconditions() != null)
-      validateQueryPairs(updateQuery.getPreconditions());
-
-    StringBuilder builder = new StringBuilder(updateQuery.getUpdateType().name());
-
-    builder.append(" INTO ").append(tableName)
-        .append("(").append(Arrays.stream(updateQuery.getValues())
-            .map(DatabaseQueryPair::column)
-            .map(DatabaseQueryColumn::getName)
-            .collect(Collectors.joining(",")))
-        .append(") VALUES (").append("?,".repeat(updateQuery.getValues().length))
-        .deleteCharAt(builder.length()).append(')');
-
-    if (updateQuery.getPreconditions() != null) {
-      builder.append("WHERE ").append(
-          Arrays.stream(updateQuery.getPreconditions())
-              .map(pair -> pair.column().getName() + "=?")
-              .collect(Collectors.joining(" AND "))
-      );
-    }
-
-    PreparedStatement statement;
-    try {
-      statement = connection.prepareStatement(builder.toString());
-      for (int i = 1; i < updateQuery.getValues().length; i++) {
-        statement.setObject(i, updateQuery.getValues()[i - 1]);
-      }
-
-    } catch (SQLException throwable) {
-      throw new DatabaseTransactionError(throwable);
-    }
-    return new DatabasePreparedTransaction(statement, this);
+  public DatabasePreparedTransaction<T> prepareTransaction(PreparedStatement statement) {
+    return new DatabasePreparedTransaction<>(statement, modelMapper);
   }
 
-  int getColumnIndex(String columnName) {
-    int counter = 0;
-    for (String str : datatypeTableMap.keySet()) {
-      if (str.equals(columnName)) {
-        return counter;
-      }
-      counter++;
-    }
-    throw new IllegalArgumentException("Unknown column " + columnName);
+  public <S extends Statement> DatabaseUpdateTransaction<S> updateTransaction(S statement) {
+    return new DatabaseUpdateTransaction<>(statement);
+  }
+
+  public DatabaseQueryTransaction<T> queryTransaction(Statement statement) {
+    return new DatabaseQueryTransaction<>(statement, modelMapper);
+  }
+
+  public String getTableName() {
+    return tableName;
   }
 }
