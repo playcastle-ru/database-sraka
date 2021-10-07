@@ -93,6 +93,10 @@ public class DatabaseTable<T> {
     return new DatabaseQueryTransaction<>(statement, modelMapper);
   }
 
+  public DataModelMapper<T> getModelMapper() {
+    return modelMapper;
+  }
+
   public String getTableName() {
     return tableName;
   }
