@@ -35,7 +35,7 @@ public class DatabaseQueryTransaction<T> extends DatabaseUpdateTransaction<State
 
         try {
             if(!set.next())
-                throw new IllegalArgumentException("Result set is empty!");
+                return null;
 
             return mapper.mapResultSet(set);
         } catch (SQLException e) {

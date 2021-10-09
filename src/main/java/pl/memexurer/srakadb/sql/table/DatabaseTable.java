@@ -51,7 +51,7 @@ public class DatabaseTable<T> {
       stringBuilder.append(',');
     }
 
-    stringBuilder.deleteCharAt(stringBuilder.length());
+    stringBuilder.deleteCharAt(stringBuilder.length() - 1);
     stringBuilder.append(')');
 
     executeUpdate(stringBuilder.toString());

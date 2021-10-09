@@ -29,7 +29,7 @@ public interface TableColumnValueDeserializer<T> {
         }
       }
     } else if (rowInfo.typed().value().length() != 0) {
-      TypedTableColumn typedTableColumn = field.getAnnotation(TypedTableColumn.class);
+      TypedTableColumn typedTableColumn = rowInfo.typed();
       return new BasicColumnValueDeserializer(
           typedTableColumn.value()
       );

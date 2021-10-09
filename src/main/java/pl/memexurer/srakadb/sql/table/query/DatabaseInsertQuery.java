@@ -43,7 +43,7 @@ public class DatabaseInsertQuery implements DatabaseQuery {
             .map(DatabaseTableColumn::getColumnName)
             .collect(Collectors.joining(",")))
         .append(") VALUES (").append("?,".repeat(this.values.length))
-        .deleteCharAt(builder.length()).append(')');
+        .deleteCharAt(builder.length() - 1).append(')');
 
     if (this.preconditions != null) {
       builder.append("WHERE ").append(

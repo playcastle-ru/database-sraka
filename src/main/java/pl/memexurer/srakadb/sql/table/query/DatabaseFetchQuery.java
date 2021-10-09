@@ -17,7 +17,8 @@ public class DatabaseFetchQuery implements DatabaseQuery {
     return this;
   }
 
-  public <T> DatabaseQueryTransaction<T> executeFetchQuery(DatabaseTable<T> databaseTable) throws DatabaseTransactionError {
+  public <T> DatabaseQueryTransaction<T> executeFetchQuery(DatabaseTable<T> databaseTable)
+      throws DatabaseTransactionError {
     StringBuilder builder = new StringBuilder("SELECT *");
 
     builder.append(" FROM ").append(databaseTable.getTableName()).append(' ');
@@ -33,8 +34,10 @@ public class DatabaseFetchQuery implements DatabaseQuery {
     PreparedStatement statement;
     try {
       statement = databaseTable.prepareStatement(builder.toString());
-      for (int i = 1; i < this.preconditions.length; i++) {
-        statement.setObject(i, this.preconditions[i - 1]);
+      if (this.preconditions != null) {
+        for (int i = 1; i < this.preconditions.length; i++) {
+          statement.setObject(i, this.preconditions[i - 1]);
+        }
       }
 
       statement.executeQuery();
