@@ -1,6 +1,7 @@
 package pl.memexurer.srakadb.sql.mapper;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -93,6 +94,19 @@ public class DataModelMapper<T> {
     for (Map.Entry<FieldObjectProperty, ColumnFieldPair> entry : properties.entrySet()) {
       entry.getKey().setValue(object,
           entry.getValue().deserializer().deserialize(set, entry.getValue().name()));
+    }
+    for (Method method : object.getClass().getDeclaredMethods()) {
+      if (!method.isAnnotationPresent(PostConstruct.class)) {
+        continue;
+      }
+
+      method.setAccessible(true);
+      try {
+        method.invoke(object);
+      } catch (ReflectiveOperationException e) {
+        throw new RuntimeException(e);
+      }
+      break;
     }
     return object;
   }
