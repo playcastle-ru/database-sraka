@@ -5,15 +5,8 @@ plugins {
 group 'pl.memexurer'
 version '2.0-SNAPSHOT'
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
-    implementation 'com.zaxxer:HikariCP:5.0.0'
-
-    compileOnly 'org.projectlombok:lombok:1.18.20'
-    annotationProcessor 'org.projectlombok:lombok:1.18.20'
+    implementation 'com.zaxxer:HikariCP:5+'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.0'

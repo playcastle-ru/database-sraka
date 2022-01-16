@@ -16,7 +16,7 @@ public interface TableColumnValueDeserializer<T> {
       if (rowInfo.serialized().value() == BasicColumnValueDeserializer.class) {
         if (field.getType().isEnum()) {
           return new DefaultEnumValueDeserializer<>((Class<? extends Enum<?>>) field.getType());
-        } else if(field.getType().isArray()) {
+        } else if (field.getType().isArray()) {
           return new ArrayValueDeserializer();
         } else {
           throw new IllegalArgumentException("Unsupported field type!");
@@ -24,6 +24,13 @@ public interface TableColumnValueDeserializer<T> {
       } else {
         try {
           return rowInfo.serialized().value().getConstructor().newInstance();
+        } catch (NoSuchMethodException e) {
+          try {
+            return rowInfo.serialized().value().getConstructor(Class.class)
+                .newInstance(field.getType());
+          } catch (ReflectiveOperationException e2) {
+            throw new RuntimeException(e2);
+          }
         } catch (ReflectiveOperationException e) {
           throw new RuntimeException(e);
         }

@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.SneakyThrows;
+import pl.memexurer.srakadb.sql.mapper.serializer.TableColumnValueDeserializer;
 import pl.memexurer.srakadb.sql.table.DatabaseTableColumn;
 import pl.memexurer.srakadb.sql.table.query.DatabaseQueryPair;
 import pl.memexurer.srakadb.sql.util.ObjectProperty;
@@ -92,8 +93,9 @@ public class DataModelMapper<T> {
   public T mapResultSet(ResultSet set) throws SQLException {
     T object = createObject(tClass);
     for (Map.Entry<FieldObjectProperty, ColumnFieldPair> entry : properties.entrySet()) {
-      entry.getKey().setValue(object,
-          entry.getValue().deserializer().deserialize(set, entry.getValue().name()));
+      Object value = entry.getValue().deserializer().deserialize(set, entry.getValue().name());
+       if(value != null)
+        entry.getKey().setValue(object, value);
     }
     for (Method method : object.getClass().getDeclaredMethods()) {
       if (!method.isAnnotationPresent(PostConstruct.class)) {
@@ -109,6 +111,18 @@ public class DataModelMapper<T> {
       break;
     }
     return object;
+  }
+
+  public Object serializeItem(DatabaseTableColumn column, Object object) {
+    if (!(column instanceof ColumnFieldPair fieldPair)) {
+      throw new IllegalArgumentException("Column type is not serialiable!");
+    }
+
+    if (object == null) {
+      return null;
+    }
+
+    return ((TableColumnValueDeserializer<Object>) fieldPair.deserializer()).serialize(object);
   }
 
   public int getColumnIndex(String column) {

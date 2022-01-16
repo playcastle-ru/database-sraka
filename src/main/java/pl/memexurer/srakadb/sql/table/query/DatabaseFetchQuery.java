@@ -30,13 +30,17 @@ public class DatabaseFetchQuery implements DatabaseQuery {
               .collect(Collectors.joining(" AND "))
       );
     }
-
     PreparedStatement statement;
     try {
       statement = databaseTable.prepareStatement(builder.toString());
-      if (this.preconditions != null) {
-        for (int i = 1; i < this.preconditions.length; i++) {
-          statement.setObject(i, this.preconditions[i - 1]);
+      System.out.println(builder.toString());
+      if (this.preconditions
+          != null) { //dlaczego tu bylo startIndex=1? kurwa, wez mi ktos przypomnij
+        //juz wiem! bo setObject przyjmuje tylko indeksy od 1
+        //ale chyba cos poszlo nie tak z moim sposobem myslenia?!
+        for (int i = 0; i < this.preconditions.length; i++) {
+          statement.setObject(i + 1, databaseTable.getModelMapper()
+              .serializeItem(this.preconditions[i].column(), this.preconditions[i].value()));
         }
       }
 

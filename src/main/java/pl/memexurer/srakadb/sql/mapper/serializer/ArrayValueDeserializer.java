@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -141,7 +142,11 @@ public class ArrayValueDeserializer implements TableColumnValueDeserializer<Obje
 
   @Override
   public Object deserialize(ResultSet set, String column) throws SQLException {
-    try (DataInputStream inputStream = new DataInputStream(set.getBinaryStream(column))) {
+    InputStream stream = set.getBinaryStream(column);
+    if(set.wasNull())
+      return null;
+
+    try (DataInputStream inputStream = new DataInputStream(stream)) {
       return read(inputStream);
     } catch (IOException e) {
       throw new RuntimeException(e);

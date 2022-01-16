@@ -17,6 +17,9 @@ public class DefaultEnumValueDeserializer<T extends Enum<?>> implements
   @Override
   public T deserialize(ResultSet set, String column) throws SQLException {
     String columnValue = set.getString(column);
+    if(columnValue == null)
+      return null;
+
     for (T t : tClass.getEnumConstants()) {
       if (t.name().equalsIgnoreCase(columnValue)) {
         return t;
@@ -35,6 +38,7 @@ public class DefaultEnumValueDeserializer<T extends Enum<?>> implements
   public String getDataType() {
     return "ENUM(" + Arrays.stream(tClass.getEnumConstants())
         .map(Enum::name)
-        .collect(Collectors.joining(",")) + ");";
+        .map(str -> "'" + str + "'")
+        .collect(Collectors.joining(",")) + ")";
   }
 }

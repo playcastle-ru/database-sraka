@@ -30,7 +30,8 @@ public class DatabaseInsertQuery implements DatabaseQuery {
     return this;
   }
 
-  public DatabaseUpdateTransaction<?> execute(DatabaseTable<?> table) throws DatabaseTransactionError {
+  public DatabaseUpdateTransaction<?> execute(DatabaseTable<?> table)
+      throws DatabaseTransactionError {
     if (this.values == null) {
       throw new IllegalArgumentException("DatabaseInsertQuery values should not be null!");
     }
@@ -56,8 +57,17 @@ public class DatabaseInsertQuery implements DatabaseQuery {
     PreparedStatement statement;
     try {
       statement = table.prepareStatement(builder.toString());
-      for (int i = 1; i < this.preconditions.length; i++) {
-        statement.setObject(i, this.preconditions[i - 1]);
+
+      for (int i = 0; i < this.values.length; i++) {
+        statement.setObject(i + 1, table.getModelMapper()
+            .serializeItem(this.values[i].column(), this.values[i].value()));
+      }
+      if (this.preconditions != null) {
+        for (int i = 0; i < this.preconditions.length; i++) {
+          //tutaj 2 bo startIndex z this.values i this.preconditions
+          statement.setObject(this.values.length + i + 2, table.getModelMapper()
+              .serializeItem(this.preconditions[i].column(), this.preconditions[i].value()));
+        }
       }
 
       statement.executeQuery();
