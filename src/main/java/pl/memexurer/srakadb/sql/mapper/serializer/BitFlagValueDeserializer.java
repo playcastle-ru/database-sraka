@@ -19,7 +19,7 @@ public class BitFlagValueDeserializer implements TableColumnValueDeserializer<Bi
   private static <T extends BitFlag> T createBitFlagObject(Class<T> bitFlagClass) {
     Constructor<T> constructor;
     try {
-      constructor = bitFlagClass.getConstructor();
+      constructor = bitFlagClass.getDeclaredConstructor();
     } catch (NoSuchMethodException e) {
       throw new IllegalArgumentException("No default constructor is present at bit flag class!");
     }

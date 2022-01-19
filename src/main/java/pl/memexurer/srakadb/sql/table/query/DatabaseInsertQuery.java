@@ -13,16 +13,10 @@ public class DatabaseInsertQuery implements DatabaseQuery {
 
   private final UpdateType updateType;
   private DatabaseQueryPair[] values;
-  private DatabaseQueryPair[] preconditions;
 
   public DatabaseInsertQuery(
       UpdateType updateType) {
     this.updateType = updateType;
-  }
-
-  public DatabaseInsertQuery preconditions(DatabaseQueryPair... pairs) {
-    this.preconditions = pairs;
-    return this;
   }
 
   public DatabaseInsertQuery values(DatabaseQueryPair... pairs) {
@@ -37,40 +31,25 @@ public class DatabaseInsertQuery implements DatabaseQuery {
     }
 
     StringBuilder builder = new StringBuilder(this.updateType.name());
-
     builder.append(" INTO ").append(table.getTableName())
         .append("(").append(Arrays.stream(this.values)
             .map(DatabaseQueryPair::column)
             .map(DatabaseTableColumn::getColumnName)
             .collect(Collectors.joining(",")))
         .append(") VALUES (").append("?,".repeat(this.values.length))
-        .deleteCharAt(builder.length() - 1).append(')');
-
-    if (this.preconditions != null) {
-      builder.append("WHERE ").append(
-          Arrays.stream(this.preconditions)
-              .map(pair -> pair.column().getColumnName() + "=?")
-              .collect(Collectors.joining(" AND "))
-      );
-    }
+        .deleteCharAt(builder.length() - 1).append(") ");
 
     PreparedStatement statement;
     try {
       statement = table.prepareStatement(builder.toString());
 
       for (int i = 0; i < this.values.length; i++) {
-        statement.setObject(i + 1, table.getModelMapper()
-            .serializeItem(this.values[i].column(), this.values[i].value()));
-      }
-      if (this.preconditions != null) {
-        for (int i = 0; i < this.preconditions.length; i++) {
-          //tutaj 2 bo startIndex z this.values i this.preconditions
-          statement.setObject(this.values.length + i + 2, table.getModelMapper()
-              .serializeItem(this.preconditions[i].column(), this.preconditions[i].value()));
-        }
+        var serialized = table.getModelMapper()
+            .serializeItem(this.values[i].column(), this.values[i].value());
+        statement.setObject(i + 1, serialized);
       }
 
-      statement.executeQuery();
+      statement.execute();
     } catch (SQLException throwable) {
       throw new DatabaseTransactionError(throwable);
     }

@@ -33,7 +33,6 @@ public class DatabaseFetchQuery implements DatabaseQuery {
     PreparedStatement statement;
     try {
       statement = databaseTable.prepareStatement(builder.toString());
-      System.out.println(builder.toString());
       if (this.preconditions
           != null) { //dlaczego tu bylo startIndex=1? kurwa, wez mi ktos przypomnij
         //juz wiem! bo setObject przyjmuje tylko indeksy od 1

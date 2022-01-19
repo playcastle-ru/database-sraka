@@ -1,5 +1,6 @@
 package pl.memexurer.srakadb.sql.mapper.serializer;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -23,11 +24,14 @@ public interface TableColumnValueDeserializer<T> {
         }
       } else {
         try {
-          return rowInfo.serialized().value().getConstructor().newInstance();
+          var constructor = rowInfo.serialized().value().getDeclaredConstructor();
+          constructor.setAccessible(true);
+          return constructor.newInstance();
         } catch (NoSuchMethodException e) {
           try {
-            return rowInfo.serialized().value().getConstructor(Class.class)
-                .newInstance(field.getType());
+            var constructor = rowInfo.serialized().value().getDeclaredConstructor(Class.class);
+            constructor.setAccessible(true);
+            return constructor.newInstance(field.getType());
           } catch (ReflectiveOperationException e2) {
             throw new RuntimeException(e2);
           }

@@ -43,7 +43,7 @@ public class DataModelMapper<T> {
   private static <T> T createObject(Class<T> tClass) {
     Constructor<T> constructor;
     try {
-      constructor = tClass.getConstructor();
+      constructor = tClass.getDeclaredConstructor();
     } catch (NoSuchMethodException e) {
       throw new IllegalArgumentException(
           "No default constructor is present at deserialized class!");
