@@ -1,36 +1,28 @@
 package pl.memexurer.srakadb.sql.table;
 
+import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Objects;
 import pl.memexurer.srakadb.sql.mapper.DataModelMapper;
-import pl.memexurer.srakadb.sql.table.query.DatabaseFetchQuery;
-import pl.memexurer.srakadb.sql.table.query.DatabaseInsertQuery;
-import pl.memexurer.srakadb.sql.table.transaction.DatabasePreparedTransaction;
-import pl.memexurer.srakadb.sql.table.transaction.DatabaseQueryTransaction;
 import pl.memexurer.srakadb.sql.table.transaction.DatabaseTransactionError;
-import pl.memexurer.srakadb.sql.table.transaction.DatabaseUpdateTransaction;
 
 public class DatabaseTable<T> {
 
   private final String tableName;
   private final DataModelMapper<T> modelMapper;
 
-  private Connection connection;
+  private final HikariDataSource dataSource;
 
-  public DatabaseTable(String tableName, Class<T> modelClass) {
+  public DatabaseTable(String tableName, HikariDataSource dataSource,
+      Class<T> modelClass) {
     this.tableName = tableName;
+    this.dataSource = dataSource;
     this.modelMapper = new DataModelMapper<>(modelClass);
   }
 
-  public void initializeTable(Connection connection) throws DatabaseTransactionError {
-    if (this.connection != null) {
-      throw new IllegalArgumentException("Table already initialized!");
-    }
-
-    this.connection = connection;
-
+  public void initializeTable() throws DatabaseTransactionError {
     StringBuilder stringBuilder = new StringBuilder("CREATE TABLE IF NOT EXISTS ");
     stringBuilder.append(tableName);
     stringBuilder.append("(");
@@ -57,40 +49,21 @@ public class DatabaseTable<T> {
     executeUpdate(stringBuilder.toString());
   }
 
-  public DatabaseUpdateTransaction<?> executeInsertQuery(DatabaseInsertQuery insertQuery) {
-    return insertQuery.execute(this);
-  }
-
-  public DatabaseQueryTransaction<T> executeFetchQuery(DatabaseFetchQuery fetchQuery) {
-    return fetchQuery.executeFetchQuery(this);
-  }
-
-  private void executeUpdate(String query) throws DatabaseTransactionError {
-    try (Statement statement = connection.createStatement()) {
-      statement.executeUpdate(query);
+  public Connection getConnection() {
+    try {
+      return Objects.requireNonNull(dataSource.getConnection());
     } catch (SQLException ex) {
       throw new DatabaseTransactionError(ex);
     }
   }
 
-  public PreparedStatement prepareStatement(String query) {
-    try {
-      return connection.prepareStatement(query);
-    } catch (SQLException throwable) {
-      throw new DatabaseTransactionError(throwable);
+  private void executeUpdate(String query) throws DatabaseTransactionError {
+    try (Connection connection = getConnection();
+        Statement statement = connection.createStatement()) {
+      statement.executeUpdate(query);
+    } catch (SQLException ex) {
+      throw new DatabaseTransactionError(ex);
     }
-  }
-
-  public DatabasePreparedTransaction<T> prepareTransaction(PreparedStatement statement) {
-    return new DatabasePreparedTransaction<>(statement, modelMapper);
-  }
-
-  public <S extends Statement> DatabaseUpdateTransaction<S> updateTransaction(S statement) {
-    return new DatabaseUpdateTransaction<>(statement);
-  }
-
-  public DatabaseQueryTransaction<T> queryTransaction(Statement statement) {
-    return new DatabaseQueryTransaction<>(statement, modelMapper);
   }
 
   public DataModelMapper<T> getModelMapper() {
