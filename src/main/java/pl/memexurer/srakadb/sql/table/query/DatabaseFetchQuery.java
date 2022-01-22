@@ -69,6 +69,10 @@ public class DatabaseFetchQuery implements DatabaseQuery {
     }
   }
 
+  public boolean isEmpty() {
+    return preconditions.isEmpty();
+  }
+
   public <T> Optional<T> executeFetchQuerySingle(DatabaseTable<T> databaseTable)
       throws DatabaseTransactionError {
     List<T> response = executeFetchQuery(databaseTable);

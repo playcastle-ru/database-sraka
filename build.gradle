@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'pl.memexurer'
-version '2.3-SNAPSHOT'
+version '2.3.1-SNAPSHOT'
 
 repositories {
     mavenCentral()
@@ -34,8 +34,19 @@ test {
 
 publishing {
     publications {
-        mavenJava(MavenPublication) {
+        gpr(MavenPublication) {
             from components.java
+        }
+    }
+
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/playcastle-ru/database-sraka")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
+                password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+            }
         }
     }
 }
