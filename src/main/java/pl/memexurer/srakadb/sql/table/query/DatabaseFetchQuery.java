@@ -5,20 +5,22 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import pl.memexurer.srakadb.sql.table.DatabaseTable;
 import pl.memexurer.srakadb.sql.table.transaction.DatabaseTransactionError;
 
 public class DatabaseFetchQuery implements DatabaseQuery {
 
-  private DatabaseQueryPair[] preconditions;
+  private final List<QueryPair> preconditions = new ArrayList<>();
 
-  public DatabaseFetchQuery precondition(DatabaseQueryPair... preconditions) {
-    this.preconditions = preconditions;
+  public DatabaseFetchQuery and(DatabaseQueryPair precondition) {
+    this.preconditions.add(new QueryPair(precondition, QueryType.AND));
+    return this;
+  }
+
+  public DatabaseFetchQuery or(DatabaseQueryPair precondition) {
+    this.preconditions.add(new QueryPair(precondition, QueryType.OR));
     return this;
   }
 
@@ -28,24 +30,29 @@ public class DatabaseFetchQuery implements DatabaseQuery {
 
     builder.append(" FROM ").append(databaseTable.getTableName()).append(' ');
 
-    if (this.preconditions != null) {
-      builder.append("WHERE ").append(
-          Arrays.stream(this.preconditions)
-              .map(pair -> pair.column().getColumnName() + "=?")
-              .collect(Collectors.joining(" AND "))
-      );
+    if (!this.preconditions.isEmpty()) {
+      boolean first = true;
+
+      builder.append("WHERE ");
+      for (QueryPair pair : preconditions) {
+        if(first) {
+          builder.append(pair.queryPair().column().getColumnName()).append("=?");
+          first = false;
+        } else {
+          builder.append(' ').append(pair.type().name());
+          builder.append(pair.queryPair().column().getColumnName()).append("=?");
+        }
+      }
     }
 
     try (Connection connection = databaseTable.getConnection();
         PreparedStatement statement = connection.prepareStatement(builder.toString());) {
 
-      if (this.preconditions
-          != null) { //dlaczego tu bylo startIndex=1? kurwa, wez mi ktos przypomnij
-        //juz wiem! bo setObject przyjmuje tylko indeksy od 1
-        //ale chyba cos poszlo nie tak z moim sposobem myslenia?!
-        for (int i = 0; i < this.preconditions.length; i++) {
-          statement.setObject(i + 1, databaseTable.getModelMapper()
-              .serializeItem(this.preconditions[i].column(), this.preconditions[i].value()));
+      if (!this.preconditions.isEmpty()) {
+        int index = 1;
+        for (QueryPair pair : this.preconditions) {
+          statement.setObject(index++, databaseTable.getModelMapper()
+              .serializeItem(pair.queryPair().column(), pair.queryPair().value()));
         }
       }
 
@@ -70,5 +77,14 @@ public class DatabaseFetchQuery implements DatabaseQuery {
     } else {
       return Optional.empty();
     }
+  }
+
+  private enum QueryType {
+    AND,
+    OR
+  }
+
+  private record QueryPair(DatabaseQueryPair queryPair, QueryType type) {
+
   }
 }
