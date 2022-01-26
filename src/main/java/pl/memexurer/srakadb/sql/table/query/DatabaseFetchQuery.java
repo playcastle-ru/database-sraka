@@ -39,7 +39,7 @@ public class DatabaseFetchQuery implements DatabaseQuery {
           builder.append(pair.queryPair().column().getColumnName()).append("=?");
           first = false;
         } else {
-          builder.append(' ').append(pair.type().name());
+          builder.append(' ').append(pair.type().name()).append(' ');
           builder.append(pair.queryPair().column().getColumnName()).append("=?");
         }
       }
