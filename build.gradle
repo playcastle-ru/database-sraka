@@ -4,14 +4,14 @@ plugins {
 }
 
 group 'pl.memexurer'
-version '2.3.2-SNAPSHOT'
+version '2.3.3-SNAPSHOT'
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation 'com.zaxxer:HikariCP:5+'
+    implementation 'com.zaxxer:HikariCP:5.0.1'
 
     compileOnly 'org.projectlombok:lombok:1+'
     annotationProcessor 'org.projectlombok:lombok:1+'
