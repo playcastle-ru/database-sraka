@@ -37,12 +37,14 @@ public class BitFlagValueDeserializer implements TableColumnValueDeserializer<Bi
   public Object serialize(BitFlag fieldValue) {
     int baseValue = 0;
 
-    for (Field field : bitFlagClass.getFields()) {
+    for (int index = 0; index < bitFlagClass.getDeclaredFields().length; index++) {
+      Field currentField = bitFlagClass.getDeclaredFields()[index];
+
       try {
-        baseValue |= field.getBoolean(fieldValue) ? 1 : 0;
+        baseValue |= currentField.getBoolean(fieldValue) ? (2 << index) : 0;
       } catch (IllegalAccessException e) {
-        field.setAccessible(true);
-        baseValue |= field.getBoolean(fieldValue) ? 1 : 0;
+        currentField.setAccessible(true);
+        baseValue |= currentField.getBoolean(fieldValue) ? (2 << index) : 0;
       }
     }
 
@@ -50,15 +52,19 @@ public class BitFlagValueDeserializer implements TableColumnValueDeserializer<Bi
   }
 
   @Override
-  @SneakyThrows
   public BitFlag deserialize(ResultSet set, String column) throws SQLException {
+    int value = set.getInt(column);
+    return deserialize(value);
+  }
+
+  @SneakyThrows
+  public BitFlag deserialize(int value) {
     BitFlag bitFlagObject = createBitFlagObject(bitFlagClass);
 
-    int value = set.getInt(column);
-    for (int index = 0; index < value; index++) {
-      Field currentField = bitFlagClass.getFields()[index];
+    for (int index = 0; index < bitFlagClass.getDeclaredFields().length; index++) {
+      Field currentField = bitFlagClass.getDeclaredFields()[index];
 
-      boolean val = (value & (2 << index)) == index; // 1 is skipped
+      boolean val = (value & (2 << index)) == (2 << index); // 1 is skipped
       try {
         currentField.setBoolean(bitFlagObject, val);
       } catch (IllegalAccessException e) {
